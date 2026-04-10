@@ -16,7 +16,24 @@
 [![Docs](https://img.shields.io/badge/📖_文档站点-Visit-D97757)](https://claudecode-haha.relakkesyang.org)
 
 </div>
+语音模块的权限和门控
+Layer 0 ─ 编译时宏        feature('VOICE_MODE')
+             ↓ 外部 build 永远 false，被 preload.ts 覆盖
+Layer 1 ─ 运行时环境变量   CLAUDE_ENABLED_FEATURES / USER_TYPE
+             ↓
+Layer 2 ─ GrowthBook      kill-switch tengu_amber_quartz_disabled
+             ↓
+Layer 3 ─ 后端凭证验证     ALIYUN_NLS_APP_KEY + AK + SK
+             ↓
+Layer 4 ─ 用户偏好         settings.voiceEnabled (/voice 命令开关)
 
+1. 识别真正的障碍是编译时，不是运行时
+2. preload.ts 时序劫持
+3. 统一 Source of Truth
+4. 音频后端优雅降级
+5. 严格遵循官方 Aliyun NLS 协议
+共同根因：假设多于验证。每次弯路都是因为没有先查清楚再动手
+成功关键：正确认识 "编译时 vs 运行时" 的本质区别，并选择用 preload.ts 时序注入解决它，而不是试图绕过或重编译。
 基于 Claude Code 泄露源码修复的**本地可运行版本**，支持接入任意 Anthropic 兼容 API（如 MiniMax、OpenRouter 等）。
 
 > 原始泄露源码无法直接运行。本仓库修复了启动链路中的多个阻塞问题，使完整的 Ink TUI 交互界面可以在本地工作。
