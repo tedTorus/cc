@@ -1,5 +1,5 @@
-import { feature } from 'bun:bundle'
 import { getRemoteControlAtStartup } from '../../utils/config.js'
+import { isVoiceFeatureGated } from '../../voice/voiceModeEnabled.js'
 import {
   EDITOR_MODES,
   NOTIFICATION_CHANNELS,
@@ -141,7 +141,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
         },
       }
     : {}),
-  ...(feature('VOICE_MODE')
+  ...(isVoiceFeatureGated()
     ? {
         voiceEnabled: {
           source: 'settings' as const,

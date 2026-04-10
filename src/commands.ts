@@ -77,9 +77,8 @@ const remoteControlServerCommand =
   feature('DAEMON') && feature('BRIDGE_MODE')
     ? require('./commands/remoteControlServer/index.js').default
     : null
-const voiceCommand = feature('VOICE_MODE')
-  ? require('./commands/voice/index.js').default
-  : null
+// Voice command loading deferred to runtime to bypass compile-time DCE
+let voiceCommand: any = null
 const forceSnip = feature('HISTORY_SNIP')
   ? require('./commands/force-snip.js').default
   : null
@@ -253,7 +252,20 @@ export const INTERNAL_ONLY_COMMANDS = [
 
 // Declared as a function so that we don't run this until getCommands is called,
 // since underlying functions read from config, which can't be read at module initialization time
-const COMMANDS = memoize((): Command[] => [
+const COMMANDS = memoize((): Command[] => {
+  // Load voice command dynamically at runtime to bypass compile-time DCE
+  let runtimeVoiceCommand: any = null
+  try {
+    if ((process.env.CLAUDE_ENABLED_FEATURES?.includes('VOICE_MODE') ||
+      process.env.USER_TYPE === 'ant') &&
+      !process.env.CLAUDE_DISABLED_FEATURES?.includes('VOICE_MODE')) {
+      runtimeVoiceCommand = require('./commands/voice/index.js').default
+    }
+  } catch (err) {
+    logForDebugging(`[voice] Failed to load voice command at runtime: ${err}`)
+  }
+
+  return [
   addDir,
   advisor,
   agents,
@@ -323,7 +335,7 @@ const COMMANDS = memoize((): Command[] => [
   ...(assistantCommand ? [assistantCommand] : []),
   ...(bridge ? [bridge] : []),
   ...(remoteControlServerCommand ? [remoteControlServerCommand] : []),
-  ...(voiceCommand ? [voiceCommand] : []),
+  ...(runtimeVoiceCommand ? [runtimeVoiceCommand] : []),
   thinkback,
   thinkbackPlay,
   permissions,
@@ -341,7 +353,8 @@ const COMMANDS = memoize((): Command[] => [
   ...(process.env.USER_TYPE === 'ant' && !process.env.IS_DEMO
     ? INTERNAL_ONLY_COMMANDS
     : []),
-])
+  ]
+})
 
 export const builtInCommandNames = memoize(
   (): Set<string> =>

@@ -3,6 +3,7 @@ import { satisfies } from 'src/utils/semver.js'
 import { isRunningWithBun } from '../utils/bundledMode.js'
 import { getPlatform } from '../utils/platform.js'
 import type { KeybindingBlock } from './types.js'
+import { isVoiceFeatureGated } from '../voice/voiceModeEnabled.js'
 
 /**
  * Default keybindings that match current Claude Code behavior.
@@ -93,7 +94,7 @@ export const DEFAULT_BINDINGS: KeybindingBlock[] = [
       // add a voice:pushToTalk entry (last wins); to disable, use /voice
       // — null-unbinding space hits a pre-existing useKeybinding.ts trap
       // where 'unbound' swallows the event (space dead for typing).
-      ...(feature('VOICE_MODE') ? { space: 'voice:pushToTalk' } : {}),
+      ...(isVoiceFeatureGated() ? { space: 'voice:pushToTalk' as const } : {}),
     },
   },
   {

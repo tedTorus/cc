@@ -21,16 +21,28 @@ type AudioNapi = typeof import('audio-capture-napi')
 let audioNapi: AudioNapi | null = null
 let audioNapiPromise: Promise<AudioNapi> | null = null
 
+// Stub module returned when audio-capture-napi is not installed (external builds).
+const AUDIO_NAPI_STUB: AudioNapi = {
+  isNativeAudioAvailable: () => false,
+  isNativeRecordingActive: () => false,
+  startNativeRecording: () => false,
+  stopNativeRecording: () => {},
+} as AudioNapi
+
 function loadAudioNapi(): Promise<AudioNapi> {
   audioNapiPromise ??= (async () => {
-    const t0 = Date.now()
-    const mod = await import('audio-capture-napi')
-    // vendor/audio-capture-src/index.ts defers require(...node) until the
-    // first function call — trigger it here so timing reflects real cost.
-    mod.isNativeAudioAvailable()
-    audioNapi = mod
-    logForDebugging(`[voice] audio-capture-napi loaded in ${Date.now() - t0}ms`)
-    return mod
+    try {
+      const t0 = Date.now()
+      const mod = await import('audio-capture-napi')
+      mod.isNativeAudioAvailable()
+      audioNapi = mod
+      logForDebugging(`[voice] audio-capture-napi loaded in ${Date.now() - t0}ms`)
+      return mod
+    } catch {
+      logForDebugging('[voice] audio-capture-napi not available, using CLI fallback')
+      audioNapi = AUDIO_NAPI_STUB
+      return AUDIO_NAPI_STUB
+    }
   })()
   return audioNapiPromise
 }

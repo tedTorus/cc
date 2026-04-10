@@ -1,5 +1,5 @@
-import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
+import { isVoiceFeatureGated } from '../../voice/voiceModeEnabled.js'
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
 import { isEnvTruthy } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
@@ -861,7 +861,7 @@ export const SettingsSchema = lazySchema(() =>
               ),
           }
         : {}),
-      ...(feature('VOICE_MODE')
+      ...(isVoiceFeatureGated()
         ? {
             voiceEnabled: z
               .boolean()

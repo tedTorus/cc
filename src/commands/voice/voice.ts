@@ -2,27 +2,24 @@ import { normalizeLanguageForSTT } from '../../hooks/useVoice.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { LocalCommandCall } from '../../types/command.js'
-import { isAnthropicAuthEnabled } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
 import {
   getInitialSettings,
   updateSettingsForSource,
 } from '../../utils/settings/settings.js'
-import { isVoiceModeEnabled } from '../../voice/voiceModeEnabled.js'
+import { isVoiceModeEnabled, isAliyunNlsConfigured } from '../../voice/voiceModeEnabled.js'
 
 const LANG_HINT_MAX_SHOWS = 2
 
 export const call: LocalCommandCall = async () => {
-  // Check auth and kill-switch before allowing voice mode
+  // Check Aliyun NLS config and kill-switch before allowing voice mode
   if (!isVoiceModeEnabled()) {
-    // Differentiate: OAuth-less users get an auth hint, everyone else
-    // gets nothing (command shouldn't be reachable when the kill-switch is on).
-    if (!isAnthropicAuthEnabled()) {
+    if (!isAliyunNlsConfigured()) {
       return {
         type: 'text' as const,
         value:
-          'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+          'Voice mode requires Aliyun NLS configuration. Set ALIYUN_NLS_APP_KEY, ALIYUN_ACCESS_KEY_ID, and ALIYUN_ACCESS_KEY_SECRET in .env or environment variables.',
       }
     }
     return {
@@ -55,9 +52,6 @@ export const call: LocalCommandCall = async () => {
   }
 
   // Toggle ON — run pre-flight checks first
-  const { isVoiceStreamAvailable } = await import(
-    '../../services/voiceStreamSTT.js'
-  )
   const { checkRecordingAvailability } = await import('../../services/voice.js')
 
   // Check recording availability (microphone access)
@@ -67,15 +61,6 @@ export const call: LocalCommandCall = async () => {
       type: 'text' as const,
       value:
         recording.reason ?? 'Voice mode is not available in this environment.',
-    }
-  }
-
-  // Check for API key
-  if (!isVoiceStreamAvailable()) {
-    return {
-      type: 'text' as const,
-      value:
-        'Voice mode requires a Claude.ai account. Please run /login to sign in.',
     }
   }
 

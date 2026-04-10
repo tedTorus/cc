@@ -8,7 +8,7 @@ const voice = {
   type: 'local',
   name: 'voice',
   description: 'Toggle voice mode',
-  availability: ['claude-ai'],
+  // Voice no longer requires claude-ai auth - uses Aliyun NLS instead
   isEnabled: () => isVoiceGrowthBookEnabled(),
   get isHidden() {
     return !isVoiceModeEnabled()

@@ -985,10 +985,10 @@ export function useVoice({
         }
         if (!conn) {
           logForDebugging(
-            '[voice] Failed to connect to voice_stream (no OAuth token?)',
+            '[voice] Failed to connect to voice_stream (no Aliyun NLS token?)',
           )
           onErrorRef.current?.(
-            'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+            'Voice connection failed. Check your Aliyun NLS credentials (ALIYUN_NLS_APP_KEY, ALIYUN_ACCESS_KEY_ID, ALIYUN_ACCESS_KEY_SECRET).',
           )
           // Clear the audio buffer on failure
           audioBuffer.length = 0
